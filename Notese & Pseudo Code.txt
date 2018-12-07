@@ -6,7 +6,7 @@
             |
             |
           \ | / Sends newOp( operation )
-           \ /  Recieves Result( operation, result )?
+           \ /  Receives Result( operation, result )?
             v
 ----------------------------
 -                          -
@@ -47,10 +47,9 @@ Upon NewOp(op){
 }
 
 
-Upon Recieve ...{
-
+Upon Receive Decide(pos, n){
+  addElent(pos, n);
 }
-
 
 ----------------
 Paxos          |
@@ -79,7 +78,7 @@ Upon Init do{
   op <- ""
 }
 
-Upon Recieve newOp( newOp){
+Upon Receive newOp( newOp){
   op <- newOp;
   seqN <- topSeqN +1;
   for( replica in knownReplicas ){
@@ -88,7 +87,7 @@ Upon Recieve newOp( newOp){
   setup Timmer( PrepareOpCode + ":" + seqN, PrepareFail, 2000 ); // Timer (id, callback, timeout)
 }
 
-Upon Recieve PrepareOk(seqN){
+Upon Receive PrepareOk(seqN){
   prepareOkAcks += 1; //contador chega ou tem de ser lita?
   if( prepareOkAcks == quorumfanout){
     timmer = getTimmerWithId( PrepareOpCode + ":" + seqN);
@@ -100,13 +99,22 @@ Upon Recieve PrepareOk(seqN){
   }
 }
 
-Upon Recieve AcceptOk( seqn, pos, op ){
+Upon Receive AcceptOk( seqn, pos, op ){
   acceptOkAcks += 1;
   if( acceptOkAcks == quorumfanout ){
-  excute(op);
-  trigger operationSucess();
+    excute(op);
+    trigger operationSucess();
+
   }
 }
+
+Upon Receive newReplica( name ){
+  trigger newOp( addReplica )
+
+}
+
+algoritmo para monotorizar as replicas... Keep alive
+
 
 -------------------------------//--------------------------------------------
 
@@ -123,17 +131,14 @@ Upon Init do{
   lockedIn = "";
 }
 
-Upon Recieve Prepare(pos, seqN){
+Upon Receive Prepare(pos, seqN){
   if( seqN > minToAccept ){
     minToAccept = seqN;
     send PrepareOK(sender, pos, seqN);
   }
 
-Upon Recieve Accept(pos, seqN, op){
+Upon Receive Accept(pos, seqN, op){
   if( seqN >= minToAccept ){
-      
+
   }
-}
-
-
 }
