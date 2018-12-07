@@ -113,7 +113,12 @@ Upon Receive newReplica( name ){
 
 }
 
+Upon Receive rmReplica( name ){
+  trigger newOp(rmReplica)
+}
+
 algoritmo para monotorizar as replicas... Keep alive
+Quando receber um accept OK de rmReplica em maioria  adicionar o  dred à blacklist
 
 
 -------------------------------//--------------------------------------------
