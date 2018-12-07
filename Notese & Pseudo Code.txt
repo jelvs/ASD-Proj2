@@ -1,0 +1,139 @@
+----------------------------
+-                          -
+- CLIENT APPLICATION       -
+-                          -
+----------------------------
+            |
+            |
+          \ | / Sends newOp( operation )
+           \ /  Recieves Result( operation, result )?
+            v
+----------------------------
+-                          -
+-         Replica          -
+-                          -
+-   Cada Replica contem    -
+-  Lista de OPS  +  Paxos  -
+
+    --------------------
+    -                  -
+    -  State Machine   -
+    -                  -
+    --------------------
+
+
+
+-                          -
+----------------------------
+
+
+--------------------------------------------------------
+Replica
+--------------------------------------------------------
+
+--------------------
+State Machine Actor |
+--------------------
+
+//State
+ops //array of operations to be excevuted;
+
+Upon Init do{
+  ops <- {} ;
+}
+
+Upon NewOp(op){
+  trigger paxos_prepare( op )
+}
+
+
+Upon Recieve ...{
+
+}
+
+
+----------------
+Paxos          |
+----------------
+
+Propser
+
+//State
+quorumfanout;
+currentAckCount;
+currentOpIndex;
+final PrepareOpCode = 1;
+final AcceptOpCode = 2
+op //operation to propose
+topSeqN // highest seqN seen so far
+knownReplicas // other known replicas  lista de   akka.tcp://SystemName@:IP:PORT
+
+
+Upon Init do{
+
+  prepareOkAcks <- 0;
+  currentOpIndex <- -1;
+  topSeqN <- 0; //-1??
+  knownReplicas <- { myself } U pi; //retirar  da config somehow
+  quorumfanout = #knownReplicas +1;
+  op <- ""
+}
+
+Upon Recieve newOp( newOp){
+  op <- newOp;
+  seqN <- topSeqN +1;
+  for( replica in knownReplicas ){
+    send Prepare(  ,seqN );
+  }
+  setup Timmer( PrepareOpCode + ":" + seqN, PrepareFail, 2000 ); // Timer (id, callback, timeout)
+}
+
+Upon Recieve PrepareOk(seqN){
+  prepareOkAcks += 1; //contador chega ou tem de ser lita?
+  if( prepareOkAcks == quorumfanout){
+    timmer = getTimmerWithId( PrepareOpCode + ":" + seqN);
+    cancel(timmer);
+    for(replica in knownReplicas ){
+      send Accept( seqN ,  op );
+    }
+    setup Timmer ( AcceptOpCode + ":" + seqN, AcceptFail, 2000 );
+  }
+}
+
+Upon Recieve AcceptOk( seqn, pos, op ){
+  acceptOkAcks += 1;
+  if( acceptOkAcks == quorumfanout ){
+  excute(op);
+  trigger operationSucess();
+  }
+}
+
+-------------------------------//--------------------------------------------
+
+-------------
+Acceptor    |
+-------------
+
+//State
+minToAccept
+lockedIn
+
+Upon Init do{
+  minToAccept = 0;
+  lockedIn = "";
+}
+
+Upon Recieve Prepare(pos, seqN){
+  if( seqN > minToAccept ){
+    minToAccept = seqN;
+    send PrepareOK(sender, pos, seqN);
+  }
+
+Upon Recieve Accept(pos, seqN, op){
+  if( seqN >= minToAccept ){
+      
+  }
+}
+
+
+}
