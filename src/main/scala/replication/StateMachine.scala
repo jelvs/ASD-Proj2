@@ -22,15 +22,11 @@ class StateMachine extends  Actor{
     case op : NewOperation =>
       pending_requests += op.operation
       val proposer: ActorSelection = context.actorSelection(PROPOSER)
-      proposer ! Init_Prepare
+      proposer ! Init_Prepare(op.operation)
+      //timer here or in paxos?
 
-    case decide: Decide =>{
-
-
-
-    }
-
-
+    case _ : Decide =>
+           
 
   }
 }
