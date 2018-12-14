@@ -1,5 +1,3 @@
 package replication
 
-class Operation {
-
-}
+case class Operation( code: Int, key: String, value: String, pos: Int )

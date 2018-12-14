@@ -43,16 +43,12 @@ class Proposer extends Actor {
       numb_replicas = replicas.size
       quorum_size = numb_replicas / 2 + 1
 
-
     case init_propose : Init_Prepare =>
 
-      sqn = highest_sn +1
+      sqn = highest_sn + 1
       proposal = init_propose.operation
 
-      for( replica : String <- replicas ){
-        val accepter : ActorSelection = context.actorSelection(  replica.concat( ACCEPTOR ) )
-        accepter ! Prepare(sqn)
-      }
+      replicas.foreach(replica => context.actorSelection(replica + ACCEPTOR) ! Prepare(sqn))
 
     case prepare_ok: PrepareOk =>
 
@@ -77,13 +73,12 @@ class Proposer extends Actor {
         if(!acceptOk_replies.contains(sender().toString())) //correct this
           acceptOk_replies += sender().toString()
 
-        if(acceptOk_replies == quorum_size) {
+        if(acceptOk_replies.size == quorum_size) {
           val stateMachine: ActorSelection = context.actorSelection(STATE_MACHINE)
           stateMachine ! Decide(current_index, proposal)
         }
       }
   }
-
 }
 
 object Proposer{
