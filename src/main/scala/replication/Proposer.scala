@@ -1,15 +1,16 @@
 package replication
 
 import akka.actor.{Actor, ActorSelection, Props}
-import replication.Accepter.PrepareOk
+import replication.Accepter.{AcceptOk, PrepareOk}
 import replication.Proposer._
 import replication.StateMachine.Init_Prepare
 
 class Proposer extends Actor {
 
   val ACCEPTOR = "/user/Acceptor"
+  val STATE_MACHINE = "/user/statemachine"
 
-  var my_proposal : Operation = _
+  var proposal : Operation = _
   var quorum_size : Int = 0
   var numb_replicas : Int = 0
   var highest_sn : Int = 0
@@ -17,6 +18,7 @@ class Proposer extends Actor {
   var current_index: Int = 0
   var replicas : Set[String] = Set.empty
   var prepareOk_replies : Set[ (Int, Operation) ] = Set.empty
+  var acceptOk_replies : Set[String] = Set.empty
 
   def getOperationWithHighestSqn: Operation = {
 
@@ -45,7 +47,7 @@ class Proposer extends Actor {
     case init_propose : Init_Prepare =>
 
       sqn = highest_sn +1
-      my_proposal = init_propose.operation
+      proposal = init_propose.operation
 
       for( replica : String <- replicas ){
         val accepter : ActorSelection = context.actorSelection(  replica.concat( ACCEPTOR ) )
@@ -59,19 +61,27 @@ class Proposer extends Actor {
           prepareOk_replies += prepare_ok.va
 
         if( prepareOk_replies.size == quorum_size ) {
-          var operation: Operation = getOperationWithHighestSqn()
-          if( operation == null ) operation = my_proposal
+          val operation: Operation = getOperationWithHighestSqn
+          if( operation != null ) proposal = operation
 
           for( replica : String <- replicas ){
             val accepter : ActorSelection = context.actorSelection(  replica.concat( ACCEPTOR ) )
-            accepter ! Accept(sqn, operation)
+            accepter ! Accept(sqn, proposal)
           }
         }
       }
 
+    case accept_ok : AcceptOk =>
 
+      if(accept_ok.sqn == sqn){
+        if(!acceptOk_replies.contains(sender().toString())) //correct this
+          acceptOk_replies += sender().toString()
 
-
+        if(acceptOk_replies == quorum_size) {
+          val stateMachine: ActorSelection = context.actorSelection(STATE_MACHINE)
+          stateMachine ! Decide(current_index, proposal)
+        }
+      }
   }
 
 }
@@ -86,5 +96,6 @@ object Proposer{
 
   case class Accept( sqn : Int, operation: Operation)
 
+  case class Decide( pos: Int, operation: Operation )
 
 }

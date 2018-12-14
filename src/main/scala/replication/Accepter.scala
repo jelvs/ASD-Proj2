@@ -26,10 +26,8 @@ class Accepter extends Actor {
 
 object Accepter{
 
-  case class AcceptOk(  )
+  case class AcceptOk( sqn: Int )
 
   case class PrepareOk( sqn: Int, va: (Int, Operation ))
-
-  case class AcceptOk( sqn: Int )
 
 }
