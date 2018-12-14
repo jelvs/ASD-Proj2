@@ -3,6 +3,7 @@ package replication
 import akka.actor.Actor
 import app._
 import Accepter._
+import replication.Proposer.Accept
 
 class Accepter extends Actor {
 
@@ -25,6 +26,10 @@ class Accepter extends Actor {
 
 object Accepter{
 
-  case class Accept();
+  case class AcceptOk(  )
+
+  case class PrepareOk( sqn: Int, va: (Int, Operation ))
+
+  case class AcceptOk( sqn: Int )
 
 }
