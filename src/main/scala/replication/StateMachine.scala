@@ -26,7 +26,7 @@ class StateMachine extends  Actor{
       //timer here or in paxos?
 
     case _ : Decide =>
-           
+
 
   }
 }
