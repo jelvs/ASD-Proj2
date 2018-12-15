@@ -7,15 +7,16 @@ import scala.collection.mutable.TreeMap
 
 class StateMachine extends Actor{
 
-  val system = ActorSystem("Process")
+  //val system = ActorSystem("Process")
 
   var pending_requests : List[NewOperation] = List.empty
+  var succeed_requests : List[NewOperation] = List.empty
 
   var stateMachine = TreeMap[Int, Operation]()
 
-  val proposer = system.actorOf(Props(new Proposer()), "proposer")
-  val accepter = system.actorOf(Props(new Accepter()), "accepter")
-  val learner = system.actorOf(Props(new Learner()), "learner")
+  val proposer = context.actorOf(Props(new Proposer()),"proposer")
+  val accepter = context.actorOf(Props(new Accepter()), "accepter")
+  val learner = context.actorOf(Props(new Learner()), "learner")
 
   override def receive = {
 
@@ -30,6 +31,23 @@ class StateMachine extends Actor{
       writeOperation(writeOp.operation, writeOp.index, writeOp.key, writeOp.value)
     }
 
+    /*
+    //TODO Sub-dividir se adiciona ou remove uma replica ou se é um write (put)
+
+    case Decide =>{
+
+
+
+    }*/
+
+    /*case sendMessagenewRep =>{
+
+    }*/
+
+    /*case getReplica =>{
+
+    }*/
+
     def writeOperation(operation: String, index: Int, key: Int, value: String) = {
 
       stateMachine.put(index, Operation(operation, key, value))
@@ -39,13 +57,13 @@ class StateMachine extends Actor{
 
 
     def stopActors() = {
-      system.stop(proposer);
-      system.stop(accepter);
-      system.stop(learner);
+      context.stop(proposer);
+      context.stop(accepter);
+      context.stop(learner);
     }
   }
 
-  
+
 }
 
 object StateMachine{

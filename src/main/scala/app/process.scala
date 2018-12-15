@@ -5,6 +5,7 @@ import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 
 
 
+
 object Process extends App {
 
   var port = 2552
@@ -17,13 +18,13 @@ object Process extends App {
   val ownAddress = getOwnAddress(port)
 
 
+
+
+
   var contactNode = ""
   if (args.length > 1) {
     contactNode =  s"akka.tcp://${system.name}@${args(1)}"
-    println("Contact: " + contactNode)
   }
-
-  println(ownAddress)
 
 
 

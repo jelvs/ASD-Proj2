@@ -25,7 +25,19 @@ class Application extends Actor  {
 
       //Tirar da Queue ????
       pending.enqueue(operation)
+
       StateMachine.Init_Prepare(operation,replicas)
+
+    }
+
+    case addReplica: AddRep => {
+
+
+    }
+
+
+    case remReplica: RemRep => {
+
 
     }
 
@@ -44,6 +56,10 @@ class Application extends Actor  {
 }
 
 object Application{
+
+  case class AddRep();
+
+  case class RemRep();
 
   case class InitReplication();
 
