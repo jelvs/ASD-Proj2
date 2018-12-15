@@ -10,6 +10,7 @@ class Proposer extends Actor {
   val ACCEPTOR = "/user/Acceptor"
   val STATE_MACHINE = "/user/statemachine"
 
+  var id : Int = 0
   var proposal : Operation = _
   var quorum_size : Int = 0
   var numb_replicas : Int = 0
@@ -39,22 +40,25 @@ class Proposer extends Actor {
   override def receive: PartialFunction[Any, Unit] = {
 
     case init : Init =>
+      id = init.id
       replicas = init.replicas
       numb_replicas = replicas.size
       quorum_size = numb_replicas / 2 + 1
 
+
     case init_propose : Init_Prepare =>
 
-      sqn = highest_sn + 1
+      if(sqn < highest_sn) sqn = id * current_index
       proposal = init_propose.operation
-
-      replicas.foreach(replica => context.actorSelection(replica + ACCEPTOR) ! Prepare(sqn))
+      replicas.foreach(replica => context.actorSelection(replica + ACCEPTOR) ! Prepare(sqn, proposal))
 
     case prepare_ok: PrepareOk =>
 
       if(prepare_ok.sqn == sqn) {
         if (!prepareOk_replies.contains(prepare_ok.va))
           prepareOk_replies += prepare_ok.va
+
+        if( prepare_ok.sqn > highest_sn ) highest_sn = prepare_ok.sqn
 
         if( prepareOk_replies.size == quorum_size ) {
           val operation: Operation = getOperationWithHighestSqn
@@ -85,9 +89,9 @@ object Proposer{
 
   val props: Props = Props[Proposer]
 
-  case class Init( replicas : Set[String] )
+  case class Init( id: Int, replicas : Set[String] )
 
-  case class Prepare( sqn: Int  )
+  case class Prepare( sqn: Int, operation: Operation  )
 
   case class Accept( sqn : Int, operation: Operation)
 
