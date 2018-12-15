@@ -3,17 +3,16 @@ package app
 import akka.actor.Actor
 import replication.{Operation, StateMachine}
 import Application._
-import replication._
 
-import scala.collection.mutable._
+import scala.collection.mutable.HashMap
+import scala.collection.mutable.Queue
 
 class Application extends Actor  {
 
   var keyValueStore = HashMap[String, String]()
-  var stateMachines = TreeMap[Int, StateMachine]()
   var pending = Queue[Operation]()
   var ownAddress: String = ""
-  var code: Int = 0
+  var replicas : Set[String] = Set.empty
 
   override def receive = {
     case init: InitReplication => {
@@ -25,9 +24,8 @@ class Application extends Actor  {
       val operation = Operation("write", write.key, write.value)
 
       //Tirar da Queue ????
-      //pending.enqueue(op)
-
-      stateMachines.get(code).get.initPaxos(operation,code)
+      pending.enqueue(operation)
+      StateMachine.Init_Prepare(operation,replicas)
 
     }
 
