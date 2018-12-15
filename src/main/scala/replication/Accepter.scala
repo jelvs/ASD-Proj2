@@ -3,7 +3,7 @@ package replication
 import akka.actor.Actor
 import app._
 import Accepter._
-import replication.Proposer.Accept
+
 
 class Accepter extends Actor {
 
@@ -56,6 +56,6 @@ object Accepter{
 
   case class PrepareOk( sqn: Int, va: (Int, Operation ))
 
-  //case class Operation (operation: String, key: Int, value: String)
+
 
 }

@@ -1,31 +1,43 @@
 package replication
 
-import akka.actor.{Actor, Props}
+import akka.actor.{ ActorSystem, Props}
 import replication.StateMachine._
 
-class StateMachine extends  Actor{
+import scala.collection.mutable.TreeMap
+
+class StateMachine (ownAddress: String, replicas : Set[String], system: ActorSystem){
 
   var pending_requests : List[NewOperation] = List.empty
 
-  override def receive: Receive = {
+  var stateMachine = TreeMap[Int, Operation]()
 
-    case init: Init =>
+  val proposer = system.actorOf(Props(new Proposer()))
 
+  val accepter = system.actorOf(Props(new Accepter()))
 
-
-    case op : NewOperation => {
-
-    }
-
-    case decide: Decide =>{
+  val learner = system.actorOf(Props(new Learner()))
 
 
+  def writeOperation (operation: String, index: Int, key: Int, value: String) = {
 
-    }
-
+    stateMachine.put(index, Operation(operation, key, value))
 
 
   }
+
+  def initPaxos(operation: Operation, code: Int) = {
+        proposer ! Proposer.Init(operation, replicas)
+  }
+
+  def stopActors () = {
+    system.stop(proposer);
+    system.stop(accepter);
+    system.stop(learner);
+  }
+
+
+
+
 }
 
 object StateMachine{

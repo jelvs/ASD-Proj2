@@ -90,7 +90,7 @@ object Proposer{
 
   val props: Props = Props[Proposer]
 
-  case class Init( replicas : Set[String] )
+  case class Init(operation: Operation,  replicas : Set[String] )
 
   case class Prepare( sqn: Int  )
 

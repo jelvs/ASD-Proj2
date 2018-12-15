@@ -53,7 +53,6 @@ object Learner{
 
   case class Accept_OK(n : Int, operation: Operation,  replicas: Set[String]);
 
-  case class Operation (operation: String, key: Int, value: String)
 
 }
 
