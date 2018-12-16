@@ -21,7 +21,7 @@ class Accepter extends Actor {
 
       if(prepare.sqn >= np){
         np = prepare.sqn
-        sender ! PrepareOk(np, prepare.operation)
+        sender ! PrepareOk(np, (na, va))
       }
 
 
@@ -54,7 +54,7 @@ object Accepter{
 
   case class AcceptOk( sqn: Int, operation: Operation)
 
-  case class PrepareOk( sqn: Int, va: Operation )
+  case class PrepareOk( sqn: Int, va: (Int, Operation) )
 
   //case class Operation (operation: String, key: Int, value: String)
 
