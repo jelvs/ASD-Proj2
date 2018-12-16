@@ -6,7 +6,7 @@ import replication.Proposer.{Accept, Prepare}
 
 class Accepter extends Actor {
 
-  val Learner = "/user/Learner"
+  val Learner = "/user/learner"
   var replicas : Set[String] = Set.empty
 
   var np: Int = 0

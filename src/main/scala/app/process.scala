@@ -3,6 +3,8 @@ package app
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 
+import replication._
+
 
 
 object Process extends App {
@@ -16,6 +18,13 @@ object Process extends App {
   val system = ActorSystem("SystemName", config)
   val ownAddress = getOwnAddress(port)
 
+  val client = system.actorOf(Props[Client], "client")
+  val register = system.actorOf(Props[Register], "register")
+  val stateMachine = system.actorOf(Props[StateMachine], "statemachine")
+  val proposer = system.actorOf(Props[Proposer], "proposer")
+  val accepter = system.actorOf(Props[Accepter], "accepter")
+  val learner = system.actorOf(Props[Learner], "learner")
+
 
   var contactNode = ""
   if (args.length > 1) {
@@ -23,7 +32,7 @@ object Process extends App {
     println("Contact: " + contactNode)
   }
 
- 
+
 
 
 

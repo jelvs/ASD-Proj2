@@ -7,7 +7,7 @@ import replication.StateMachine.Init_Prepare
 
 class Proposer extends Actor {
 
-  val ACCEPTOR = "/user/Acceptor"
+  val ACCEPTOR = "/user/acceptor"
   val STATE_MACHINE = "/user/statemachine"
 
   var id : Int = 0
