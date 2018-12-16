@@ -8,8 +8,8 @@ import Learner._
 class Learner  extends Actor{
 
   var na: Int = 0
-  var va = Operation("", 0, "")
-  var decision = Operation("", 0, "")
+  var va: Operation = _
+  var decision: Operation = _
   var majority: Boolean = false
   var nAcceptedOk = 0
 
@@ -34,8 +34,6 @@ class Learner  extends Actor{
         majority = true
         decision = va
 
-        //val process = context.actorSelection()    statemachine
-        // process ! sendDecision
       }
 
     }
@@ -53,7 +51,7 @@ object Learner{
 
   case class Accept_OK(n : Int, operation: Operation,  replicas: Set[String]);
 
-  case class Operation (operation: String, key: Int, value: String)
+  //case class Operation (operation: String, key: Int, value: String)
 
 }
 

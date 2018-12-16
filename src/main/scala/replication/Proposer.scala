@@ -66,7 +66,7 @@ class Proposer extends Actor {
 
           for( replica : String <- replicas ){
             val accepter : ActorSelection = context.actorSelection(  replica.concat( ACCEPTOR ) )
-            accepter ! Accept(sqn, proposal)
+            accepter ! Accept(sqn, proposal, replicas)
           }
         }
       }
@@ -93,7 +93,7 @@ object Proposer{
 
   case class Prepare( sqn: Int, operation: Operation  )
 
-  case class Accept( sqn : Int, operation: Operation)
+  case class Accept( sqn : Int, operation: Operation, replicas: Set[String])
 
   case class Decide( pos: Int, operation: Operation )
 

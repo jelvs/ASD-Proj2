@@ -23,7 +23,7 @@ object Process extends App {
     println("Contact: " + contactNode)
   }
 
-  println(ownAddress)
+ 
 
 
 

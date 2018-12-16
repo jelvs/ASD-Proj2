@@ -1,11 +1,12 @@
 package replication
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorSelection}
 import Accepter._
 import replication.Proposer.{Accept, Prepare}
 
 class Accepter extends Actor {
 
+  val Learner = "/user/Learner"
   var replicas : Set[String] = Set.empty
 
   var np: Int = 0
@@ -33,13 +34,13 @@ class Accepter extends Actor {
 
         sender ! AcceptOk(accept.sqn, va)
 
-        /*
+
         for(r <- accept.replicas) {
           //Send to learners
-          //val process = context.actorSelection(...)
-          //process ! Learner.Accept_OK(na, va, accept.replicas)
+          val learner: ActorSelection = context.actorSelection(Learner)
+          learner ! AcceptOkLearner(na, va, accept.replicas)
         }
-        */
+
       }
 
     }
@@ -53,6 +54,8 @@ object Accepter{
   case class Init( replicas: Set[String] )
 
   case class AcceptOk( sqn: Int, operation: Operation)
+
+  case class AcceptOkLearner( sqn: Int, operation: Operation, replicas: Set[String])
 
   case class PrepareOk( sqn: Int, va: (Int, Operation) )
 
