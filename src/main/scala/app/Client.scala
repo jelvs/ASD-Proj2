@@ -26,7 +26,7 @@ object Client extends App {
 
   class ClientActor extends Actor {
 
-    val Register = "/user/register"
+    val REGISTER = "/user/register"
 
     override def receive = {
 
@@ -42,14 +42,14 @@ object Client extends App {
 
 
 
-        val register: ActorSelection = context.actorSelection(pro.concat(Register))
+        val register: ActorSelection = context.actorSelection(pro.concat(REGISTER))
 
         register ! Write(key, value)
       }
 
       case Read(key) => {
 
-        val register: ActorSelection = context.actorSelection(Register)
+        val register: ActorSelection = context.actorSelection(REGISTER)
 
         register ! Read(key)
       }

@@ -1,8 +1,8 @@
 package app
 
 import akka.actor.{ActorSystem, Props}
+import app.Register.{Init}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
-
 import replication._
 
 
@@ -24,6 +24,8 @@ object Process extends App {
   //val proposer = system.actorOf(Props[Proposer], "proposer")
   //val accepter = system.actorOf(Props[Accepter], "accepter")
   //val learner = system.actorOf(Props[Learner], "learner")
+
+  register ! Init(ownAddress)
 
 
   var contactNode = ""
