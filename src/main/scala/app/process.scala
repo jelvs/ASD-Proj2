@@ -18,12 +18,12 @@ object Process extends App {
   val system = ActorSystem("SystemName", config)
   val ownAddress = getOwnAddress(port)
 
-  val client = system.actorOf(Props[Client], "client")
+  //val client = system.actorOf(Props[Client], "client")
   val register = system.actorOf(Props[Register], "register")
   val stateMachine = system.actorOf(Props[StateMachine], "statemachine")
-  val proposer = system.actorOf(Props[Proposer], "proposer")
-  val accepter = system.actorOf(Props[Accepter], "accepter")
-  val learner = system.actorOf(Props[Learner], "learner")
+  //val proposer = system.actorOf(Props[Proposer], "proposer")
+  //val accepter = system.actorOf(Props[Accepter], "accepter")
+  //val learner = system.actorOf(Props[Learner], "learner")
 
 
   var contactNode = ""
@@ -31,6 +31,8 @@ object Process extends App {
     contactNode =  s"akka.tcp://${system.name}@${args(1)}"
     println("Contact: " + contactNode)
   }
+
+
 
 
 

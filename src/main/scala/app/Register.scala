@@ -1,7 +1,7 @@
 package app
 
 import akka.actor.{Actor, ActorSelection}
-import app.Client._
+import app.ClientActor._
 import app.Register.ForwardRead
 import replication.{Operation, StateMachine}
 import replication.StateMachine.{ExecuteOp, NewOperation}
@@ -41,21 +41,26 @@ class Register extends Actor {
 
     }
 
-    /*//receber da statemachine mandar para o client
-    case forwardRead : Read =>{
 
-      if(keyValueStore.contains(forwardRead.key)){
-        keyValueStore.get(forwardRead.key);
-      }
-      else{
-        //erro nao existe value para essa determinada key
-      }
+
+    case read : Read =>{
 
       val client: ActorSelection = context.actorSelection(CLIENT)
 
-      //client ! SendRead(keyValueStore.get(forwardRead.operation.value)
+      if(keyValueStore.contains(read.key)){
+        //client ! SendRead(keyValueStore.get(read.key))
+      }
+      else{
+        //erro nao existe value para essa determinada key
 
-    }*/
+        //client ! SendRead(keyValueStore.get(forwardRead.operation.value)
+      }
+
+
+
+
+
+    }
 
     //receber da statemachine guardar e mandar para o client
     case forwardWrite: ExecuteOp => {

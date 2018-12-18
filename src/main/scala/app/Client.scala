@@ -1,11 +1,31 @@
 package app
 
-import akka.actor.{Actor, ActorSelection, ActorRef}
+import akka.actor.{Actor, ActorSelection, ActorSystem, Props}
+import ClientActor._
 
-import Client._
-import akka.util.Timeout
+import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 
-class Client(proposers: List[ActorRef], replicas: Int, sqn: Int) extends Actor {
+
+
+object Client extends App{
+
+  val config = ConfigFactory.load.getConfig("ApplicationConfig")
+  val system = ActorSystem("akkaSystem", config)
+
+  val clientActor = system.actorOf(Props[ClientActor], "clientActor")
+
+
+  println("hello world")
+
+  clientActor ! Write("1", "maria")
+
+
+
+
+
+}
+
+class ClientActor extends Actor {
 
   val Register = "/user/Register"
 
@@ -15,6 +35,8 @@ class Client(proposers: List[ActorRef], replicas: Int, sqn: Int) extends Actor {
 
 
     case Write(key, value) => {
+
+      println("write bitch")
 
       val register: ActorSelection = context.actorSelection(Register)
 
@@ -36,7 +58,7 @@ class Client(proposers: List[ActorRef], replicas: Int, sqn: Int) extends Actor {
 
 }
 
-object Client {
+object ClientActor {
 
   case class Put(key: String, value: String)
 
