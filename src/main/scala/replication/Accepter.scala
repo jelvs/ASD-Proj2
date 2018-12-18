@@ -59,6 +59,5 @@ object Accepter{
 
   case class PrepareOk( sqn: Int, va: (Int, Operation) )
 
-  //case class Operation (operation: String, key: Int, value: String)
 
 }

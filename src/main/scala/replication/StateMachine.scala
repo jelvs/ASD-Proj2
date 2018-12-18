@@ -60,7 +60,7 @@ class StateMachine extends  Actor{
 
     case addReplica: AddReplica =>
       if(!replicas.contains(addReplica.replica)){
-
+        replicas +: addReplica.replica
       }
 
       
@@ -80,5 +80,7 @@ object StateMachine{
   case class AddReplica(replica: String)
 
   case class RemoveReplica(replica : String)
+
+  case class ExecuteOp(operation : Operation)
 
 }
