@@ -21,11 +21,13 @@ object Process extends App {
   //val client = system.actorOf(Props[Client], "client")
   val register = system.actorOf(Props[Register], "register")
   val stateMachine = system.actorOf(Props[StateMachine], "statemachine")
+  val lifekeeper = system.actorOf(Props[LifeKeeper], "lifekeeper")
   //val proposer = system.actorOf(Props[Proposer], "proposer")
   //val accepter = system.actorOf(Props[Accepter], "accepter")
   //val learner = system.actorOf(Props[Learner], "learner")
 
   register ! Init(ownAddress)
+  lifekeeper ! LifeKeeper.Init(ownAddress)
 
 
   var contactNode = ""

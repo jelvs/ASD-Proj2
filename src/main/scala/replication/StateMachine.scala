@@ -64,10 +64,15 @@ class StateMachine extends  Actor{
 
       }
 
-    case addReplica: AddReplica =>
-      if(!replicas.contains(addReplica.replica)){
+    case addReplica: AddReplica => {
+      if (!replicas.contains(addReplica.replica)) {
         replicas +: addReplica.replica
       }
+    }
+
+    case removeReplica: RemoveReplica => {
+      replicas = replicas.filter(!_.equals(removeReplica.replica))
+    }
 
     case sendStateRep: AddAndSend =>{
 

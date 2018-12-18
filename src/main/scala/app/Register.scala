@@ -14,8 +14,8 @@ import scala.util.Random
 class Register extends Actor {
 
   val STATE_MACHINE = "/user/statemachine"
-
   val CLIENT = "/user/client"
+  val LIFEKEEPER = "/user/lifekeeper"
 
   var keyValueStore = HashMap[String, String]()
 
@@ -23,12 +23,17 @@ class Register extends Actor {
 
   val processes: List[String] = ConfigFactory.load.getStringList("processes").asScala.toList
 
+  var replicas : Set[String] = Set.empty
+
   override def receive = {
 
 
     case message: Init => {
-
       ownAddress = message.ownAddress
+
+      val lifekeeper: ActorSelection = context.actorSelection(LIFEKEEPER)
+
+      lifekeeper ! LifeKeeper.InitHeartbeat(ownAddress)
 
       if(!processes.contains(ownAddress)){
         val process = Random.shuffle(processes).head
@@ -104,6 +109,8 @@ class Register extends Actor {
 
 
   }
+
+
 
 }
 
