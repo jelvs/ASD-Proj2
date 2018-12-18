@@ -14,6 +14,9 @@ class StateMachine extends  Actor{
 
 
   val PROPOSER = "/user/proposer"
+  val proposer = context.actorOf(Props(new Proposer()),"proposer")
+  val accepter = context.actorOf(Props(new Accepter()), "accepter")
+  val learner = context.actorOf(Props(new Learner()), "learner")
 
   def getOperation(pos: Int): Operation = {
 

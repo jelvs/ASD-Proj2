@@ -35,8 +35,8 @@ class Register extends Actor  {
 
     }
 
-    //receber da statemachine mandar para o client
-    case forwardRead : receiveRead =>{
+    /*//receber da statemachine mandar para o client
+    case forwardRead : SendRead =>{
 
       val client: ActorSelection = context.actorSelection(CLIENT)
 
@@ -51,7 +51,7 @@ class Register extends Actor  {
 
       //client ! sendWrite(value)
 
-    }
+    }*/
   }
 
 }
