@@ -34,6 +34,8 @@ class StateMachine extends  Actor{
       numb_replicas = replicas.size
 
     case op : NewOperation =>
+
+      println("Lets start this shit")
       pending_requests = pending_requests :+ op.operation
       val proposer: ActorSelection = context.actorSelection(PROPOSER)
       proposer ! Init_Prepare(op.operation)

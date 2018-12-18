@@ -31,12 +31,16 @@ class Register extends Actor {
 
     case write: Write => {
 
+      println("ola bitch im back")
+
       val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
       val pos : Int = -1
 
       val operation = Operation("write", write.key, write.value, pos )
 
       statemachine ! NewOperation(operation)
+
+
 
 
     }

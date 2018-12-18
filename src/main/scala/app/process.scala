@@ -15,7 +15,7 @@ object Process extends App {
   }
 
   val config = configure()
-  val system = ActorSystem("SystemName", config)
+  val system = ActorSystem("akkaSystem", config)
   val ownAddress = getOwnAddress(port)
 
   //val client = system.actorOf(Props[Client], "client")
