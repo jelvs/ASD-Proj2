@@ -12,11 +12,10 @@ class Proposer extends Actor {
 
   var id : Int = 0
   var proposal : Operation = _
+  var operations_executed : Int = 0
   var quorum_size : Int = 0
-  var numb_replicas : Int = 0
   var highest_sn : Int = 0
   var sqn : Int = 0
-  var current_index: Int = 0
   var replicas : Set[String] = Set.empty
   var prepareOk_replies : Set[ (Int, Operation) ] = Set.empty
   var acceptOk_replies : Set[String] = Set.empty
@@ -42,13 +41,11 @@ class Proposer extends Actor {
     case init : Init =>
       id = init.id
       replicas = init.replicas
-      numb_replicas = replicas.size
-      quorum_size = numb_replicas / 2 + 1
-
+      quorum_size = replicas.size / 2 + 1
 
     case init_propose : Init_Prepare =>
 
-      if(sqn < highest_sn) sqn = id * current_index
+      if(sqn < highest_sn) sqn = id * operations_executed
       proposal = init_propose.operation
       replicas.foreach(replica => context.actorSelection(replica + ACCEPTOR) ! Prepare(sqn, proposal))
 
