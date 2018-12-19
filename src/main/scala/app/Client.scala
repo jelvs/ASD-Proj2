@@ -22,6 +22,10 @@ object Client extends App {
 
 
   clientActor ! Write("1", "maria")
+  clientActor ! Write("2", "jose")
+  clientActor ! Read("1")
+  clientActor ! Read("2")
+
 
 
   class ClientActor extends Actor {
@@ -40,8 +44,6 @@ object Client extends App {
        // println(pro)
 
 
-
-
         val register: ActorSelection = context.actorSelection(pro.concat(REGISTER))
 
         register ! Write(key, value)
@@ -49,7 +51,9 @@ object Client extends App {
 
       case Read(key) => {
 
-        val register: ActorSelection = context.actorSelection(REGISTER)
+        val pro = Random.shuffle(processes).head
+
+        val register: ActorSelection = context.actorSelection(pro.concat(REGISTER))
 
         register ! Read(key)
       }
