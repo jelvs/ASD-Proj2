@@ -2,7 +2,8 @@ package app
 
 import akka.actor.{Actor, ActorSelection}
 import app.ClientActor._
-import app.Register.{ForwardRead, Init, ReceiveState}
+import app.LifeKeeper.ReceiveImHere
+import app.Register.{ForwardRead, ImHere, Init, ReceiveState}
 import com.typesafe.config.ConfigFactory
 import replication.{Operation, StateMachine}
 import replication.StateMachine._
@@ -107,6 +108,11 @@ class Register extends Actor {
 
     }
 
+    case imHere : ImHere =>{
+      val lifeKeeper: ActorSelection = context.actorSelection(sender.path.address.toString.concat(LIFEKEEPER))
+      lifeKeeper ! ReceiveImHere(ownAddress)
+    }
+
 
   }
 
@@ -127,5 +133,7 @@ object Register {
   case class Init(ownAddress: String)
 
   case class ReceiveState(replicas: Set[String], decided: List[Operation])
+
+  case class ImHere()
 
 }
