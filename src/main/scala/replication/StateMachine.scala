@@ -72,7 +72,8 @@ class StateMachine extends  Actor{
         + decide.operation.value + " do cliente " + decide.operation.client)
 
       if( pending_requests.contains( decide.operation ) )
-        pending_requests = pending_requests.filter( _ == decide.operation)
+        pending_requests = pending_requests.filter( _.code == decide.operation.code )
+
 
       var hasHole : Boolean = false
       var i : Int= operations_executed
@@ -84,8 +85,11 @@ class StateMachine extends  Actor{
 
           if( operation.code == "addReplica" ) addReplicaToSets( operation.value )
           else if (operation.code == "removeReplica") removeReplicaFromSets(operation.value)
+          else {
+            val register = context.actorSelection(REGISTER)
+            register ! ExecuteOp(operation)
+          }
 
-          //trigger Register.Execute(operation)
           i+=1
         }
 

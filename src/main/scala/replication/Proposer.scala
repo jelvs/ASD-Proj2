@@ -17,8 +17,8 @@ class Proposer extends Actor {
   var highest_sn : Int = 0
   var sqn : Int = 0
   var replicas : List[String] = List.empty
-  var prepareOk_replies : Set[ (Int, PrepareOk) ] = Set.empty
-  var acceptOk_replies : Set[String] = Set.empty
+  var prepareOk_replies : List[ PrepareOk ] = List.empty
+  var acceptOk_replies : List[String] = List.empty
 
   def getOperationWithHighestSqn: Operation = {
 
@@ -28,9 +28,9 @@ class Proposer extends Actor {
     if(prepareOk_replies.isEmpty) return null
 
     for( prepareOk <- prepareOk_replies )
-      if( prepareOk._2.sqn > top_sqn ){
-        top_sqn = prepareOk._2.sqn
-        operation = prepareOk._2.va._2
+      if( prepareOk.va._1 > top_sqn ){
+        top_sqn = prepareOk.va._1
+        operation = prepareOk.va._2
       }
 
     operation
@@ -57,8 +57,7 @@ class Proposer extends Actor {
       println("Got reply")
       if(prepare_ok.sqn == sqn) {
         println("Entrei aqui")
-        if (!prepareOk_replies.contains(prepare_ok))
-          prepareOk_replies += prepare_ok
+        prepareOk_replies = prepareOk_replies :+ prepare_ok
 
         if( prepare_ok.sqn > highest_sn ) highest_sn = prepare_ok.sqn
 
@@ -80,10 +79,11 @@ class Proposer extends Actor {
 
       if(accept_ok.sqn == sqn){
         if(!acceptOk_replies.contains(sender().toString())) //correct this
-          acceptOk_replies += sender().toString()
+          acceptOk_replies = acceptOk_replies :+ sender().toString()
 
         if(acceptOk_replies.size == quorum_size) {
           println("Got majority accept")
+
           val stateMachine: ActorSelection = context.actorSelection(STATE_MACHINE)
           stateMachine ! Decide(operations_executed, proposal)
         }
