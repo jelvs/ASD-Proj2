@@ -1,11 +1,14 @@
 package replication
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorSelection}
 import app._
 import Learner._
+import replication.Proposer.Decide
 
 
 class Learner  extends Actor{
+
+  val STATE_MACHINE = "/user/statemachine"
 
   var na: Int = 0
   var va: Operation = _
@@ -35,9 +38,11 @@ class Learner  extends Actor{
         decision = va
 
       }
-
     }
 
+    case decide: Decide =>
+      val stateMachine : ActorSelection = context.actorSelection(STATE_MACHINE)
+      stateMachine ! decide
 
 
   }

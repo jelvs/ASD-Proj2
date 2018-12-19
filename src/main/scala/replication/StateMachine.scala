@@ -7,6 +7,7 @@ import replication.StateMachine._
 
 class StateMachine extends  Actor{
 
+  var ownaddress : String = ""
   var paxos_initiated : Boolean = false
   var operations_executed : Int = 0
   var replicas : List[String] = List.empty
@@ -30,8 +31,6 @@ class StateMachine extends  Actor{
     paxos_initiated = true
     val to_propose : Operation = pending_requests.head
     to_propose.pos = decided.size
-    printf("A propor " + to_propose.code + " com key " + to_propose.key + " com value "
-      + to_propose.value + " do cliente " + to_propose.client + "\n")
     val proposer: ActorSelection = context.actorSelection(PROPOSER)
     proposer ! Init_Prepare(to_propose)
     //timer here or in paxos?
@@ -57,7 +56,7 @@ class StateMachine extends  Actor{
 
     case init: Init =>
       replicas = init.replicas
-
+      ownaddress = init.ownaddress
 
     case op : NewOperation =>
 
@@ -68,40 +67,49 @@ class StateMachine extends  Actor{
 
     case decide : Decide =>
 
-      printf("Decido " + decide.operation.code + " com key " + decide.operation.key + " com value "
+      println("Decido " + decide.operation.code + " com key " + decide.operation.key + " com value "
         + decide.operation.value + " do cliente " + decide.operation.client)
 
-      if( pending_requests.contains( decide.operation ) )
-        pending_requests = pending_requests.filter( _.code == decide.operation.code )
+      decided = decided :+ decide.operation
 
+      if( pending_requests.contains( decide.operation ) )
+        pending_requests = pending_requests.filterNot( _ == decide.operation )
 
       var hasHole : Boolean = false
-      var i : Int= operations_executed
-      while ( i < decided.length || !hasHole ){
+      while ( operations_executed < decided.length || !hasHole ){
 
-        val operation : Operation = getOperation(i)
-        if(operation == null) hasHole = true
-        else {
+        val operation : Operation = getOperation(operations_executed)
+        if(operation == null) {
+          println("Has hole")
+          hasHole = true
+        }else {
 
-          if( operation.code == "addReplica" ) addReplicaToSets( operation.value )
-          else if (operation.code == "removeReplica") removeReplicaFromSets(operation.value)
+          if( operation.code == "addReplica" ) {
+            println("add replica")
+            addReplicaToSets(operation.value)
+          }else if (operation.code == "removeReplica"){
+            println("remove")
+            removeReplicaFromSets(operation.value)
+          }
           else {
+            println("aqui")
             val register = context.actorSelection(REGISTER)
             register ! ExecuteOp(operation)
           }
 
-          i+=1
+          operations_executed+=1
         }
 
        if(pending_requests.nonEmpty)
         initPaxos()
       }
 
+
     case addReplica: AddReplica =>
-      if (!replicas.contains(addReplica.replica)) self ! NewOperation( Operation( "addReplica", "", addReplica.replica, -1, addReplica.replica ))
+      if (!replicas.contains(addReplica.replica)) self ! NewOperation( Operation( "addReplica", "", addReplica.replica, -1, addReplica.replica, ownaddress ))
 
     case removeReplica: RemoveReplica =>
-      self ! NewOperation(Operation("removeReplica", "", removeReplica.replica, -1, removeReplica.replica ) )
+      self ! NewOperation(Operation("removeReplica", "", removeReplica.replica, -1, removeReplica.replica, ownaddress  ) )
 
     case sendStateRep: AddAndSend =>
 
@@ -120,7 +128,7 @@ object StateMachine{
 
   val props: Props = Props[StateMachine]
 
-  case class Init ( replicas: List[String] )
+  case class Init (ownaddress: String, replicas: List[String] )
 
   case class NewOperation( operation: Operation )
 

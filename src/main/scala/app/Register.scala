@@ -27,7 +27,7 @@ class Register extends Actor {
   var replicas : Set[String] = Set.empty
 
   def executeRead(operation: Operation): Unit = {
-
+    println("hey no read")
     var toReturn : String = null
 
     keyValueStore.get(operation.key) match {
@@ -35,12 +35,15 @@ class Register extends Actor {
       case None => //Do nothing
     }
 
-    val client: ActorSelection = context.actorSelection(operation.client+CLIENT)
-    client ! Response(toReturn)
+    if( operation.replica == ownAddress ) {
+      println("vou responder")
+      val client: ActorSelection = context.actorSelection(operation.client + CLIENT)
+      client ! Response(toReturn)
+    }
   }
 
   def executeWrite(operation: Operation): Unit = {
-
+    println("Hey no write")
     var toReturn : String = null
 
     keyValueStore.get(operation.key) match {
@@ -49,8 +52,11 @@ class Register extends Actor {
     }
 
     keyValueStore.put(operation.key, operation.value)
-    val client: ActorSelection = context.actorSelection(operation.client+CLIENT)
-    client ! Response(toReturn)
+
+    if(operation.replica == ownAddress) {
+      val client: ActorSelection = context.actorSelection(operation.client + CLIENT)
+      client ! Response(toReturn)
+    }
   }
 
   override def receive: PartialFunction[Any, Unit] = {
@@ -71,15 +77,16 @@ class Register extends Actor {
     case write: Write =>
 
       val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-      val operation = Operation("write", write.key, write.value, -1, write.address)
+      val operation = Operation("write", write.key, write.value, -1, write.address, ownAddress)
       statemachine ! NewOperation(operation)
 
     case read: Read =>
       val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-      val operation = Operation("read", read.key, "", -1, read.address)
+      val operation = Operation("read", read.key, "", -1, read.address, ownAddress)
       statemachine ! NewOperation(operation)
 
     case operation_to_execute : ExecuteOp =>
+      println("Recebi algo para executar")
       operation_to_execute.operation.code match {
         case "read" => executeRead(operation_to_execute.operation)
         case "write" => executeWrite(operation_to_execute.operation)

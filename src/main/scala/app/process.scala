@@ -38,7 +38,7 @@ object Process extends App {
 
   register ! Init(ownAddress)
   lifekeeper ! LifeKeeper.Init(ownAddress)
-  stateMachine ! StateMachine.Init(processes)
+  stateMachine ! StateMachine.Init(ownAddress,processes)
   proposer ! Proposer.Init(id, processes)
   accepter ! Accepter.Init(processes)
 
@@ -48,12 +48,6 @@ object Process extends App {
     contactNode =  s"akka.tcp://${system.name}@${args(1)}"
     println("Contact: " + contactNode)
   }
-
-
-
-
-
-
 
 
   def configure(): Config = {

@@ -9,6 +9,7 @@ class Proposer extends Actor {
 
   val ACCEPTOR = "/user/accepter"
   val STATE_MACHINE = "/user/statemachine"
+  val LEARNER = "/user/learner"
 
   var id : Int = 0
   var proposal : Operation = _
@@ -84,8 +85,10 @@ class Proposer extends Actor {
         if(acceptOk_replies.size == quorum_size) {
           println("Got majority accept")
 
-          val stateMachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-          stateMachine ! Decide(operations_executed, proposal)
+          for(replica <- replicas) {
+            val learner: ActorSelection = context.actorSelection(replica + LEARNER)
+            learner ! Decide(operations_executed, proposal)
+          }
         }
       }
   }

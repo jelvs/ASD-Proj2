@@ -2,6 +2,7 @@ package app
 
 import akka.actor.{Actor, ActorSelection, ActorSystem, Props}
 import ClientActor._
+import app.Register.Response
 
 import collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
@@ -74,6 +75,8 @@ object Client extends App {
         register ! Read(key, addr)
       }
 
+      case response: Response =>
+        println("Respsta " + response.value)
 
     }
   }
