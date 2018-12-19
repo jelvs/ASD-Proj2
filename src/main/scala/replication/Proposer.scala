@@ -7,7 +7,7 @@ import replication.StateMachine.Init_Prepare
 
 class Proposer extends Actor {
 
-  val ACCEPTOR = "/user/acceptor"
+  val ACCEPTOR = "/user/accepter"
   val STATE_MACHINE = "/user/statemachine"
 
   var id : Int = 0
@@ -16,8 +16,8 @@ class Proposer extends Actor {
   var quorum_size : Int = 0
   var highest_sn : Int = 0
   var sqn : Int = 0
-  var replicas : Set[String] = Set.empty
-  var prepareOk_replies : Set[ (Int, Operation) ] = Set.empty
+  var replicas : List[String] = List.empty
+  var prepareOk_replies : Set[ (Int, PrepareOk) ] = Set.empty
   var acceptOk_replies : Set[String] = Set.empty
 
   def getOperationWithHighestSqn: Operation = {
@@ -28,9 +28,9 @@ class Proposer extends Actor {
     if(prepareOk_replies.isEmpty) return null
 
     for( prepareOk <- prepareOk_replies )
-      if( prepareOk._1 > top_sqn ){
-        top_sqn = prepareOk._1
-        operation = prepareOk._2
+      if( prepareOk._2.sqn > top_sqn ){
+        top_sqn = prepareOk._2.sqn
+        operation = prepareOk._2.va._2
       }
 
     operation
@@ -44,20 +44,28 @@ class Proposer extends Actor {
       quorum_size = replicas.size / 2 + 1
 
     case init_propose : Init_Prepare =>
-
+      println("Intiating propose")
       if(sqn < highest_sn) sqn = id * operations_executed
       proposal = init_propose.operation
-      replicas.foreach(replica => context.actorSelection(replica + ACCEPTOR) ! Prepare(sqn, proposal))
+      replicas.foreach(replica => {
+        println("Mandar prepare para " + replica)
+        val actorSelection : ActorSelection = context.actorSelection(replica + ACCEPTOR)
+        actorSelection ! Prepare(sqn, proposal)
+      })
 
     case prepare_ok: PrepareOk =>
-
+      println("Got reply")
       if(prepare_ok.sqn == sqn) {
-        if (!prepareOk_replies.contains(prepare_ok.va))
-          prepareOk_replies += prepare_ok.va
+        println("Entrei aqui")
+        if (!prepareOk_replies.contains(prepare_ok))
+          prepareOk_replies += prepare_ok
 
         if( prepare_ok.sqn > highest_sn ) highest_sn = prepare_ok.sqn
 
+        println("Quorum size "  +  quorum_size)
+        println("Replies: " + prepareOk_replies.size)
         if( prepareOk_replies.size == quorum_size ) {
+          println("Got Majority")
           val operation: Operation = getOperationWithHighestSqn
           if( operation != null ) proposal = operation
 
@@ -75,6 +83,7 @@ class Proposer extends Actor {
           acceptOk_replies += sender().toString()
 
         if(acceptOk_replies.size == quorum_size) {
+          println("Got majority accept")
           val stateMachine: ActorSelection = context.actorSelection(STATE_MACHINE)
           stateMachine ! Decide(operations_executed, proposal)
         }
@@ -86,11 +95,11 @@ object Proposer{
 
   val props: Props = Props[Proposer]
 
-  case class Init( id: Int, replicas : Set[String] )
+  case class Init( id: Int, replicas : List[String] )
 
   case class Prepare( sqn: Int, operation: Operation  )
 
-  case class Accept( sqn : Int, operation: Operation, replicas: Set[String])
+  case class Accept( sqn : Int, operation: Operation, replicas: List[String])
 
   case class Decide( pos: Int, operation: Operation )
 

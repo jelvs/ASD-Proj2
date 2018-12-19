@@ -9,7 +9,7 @@ class StateMachine extends  Actor{
 
   var paxos_initiated : Boolean = false
   var operations_executed : Int = 0
-  var replicas : Set[String] = Set.empty
+  var replicas : List[String] = List.empty
   var decided : List[Operation] = List.empty
   var pending_requests : List[Operation] = List.empty
 
@@ -29,7 +29,9 @@ class StateMachine extends  Actor{
 
     paxos_initiated = true
     val to_propose : Operation = pending_requests.head
-    to_propose.pos = decided.size +1
+    to_propose.pos = decided.size
+    printf("A propor " + to_propose.code + " com key " + to_propose.key + " com value "
+      + to_propose.value + " do cliente " + to_propose.client + "\n")
     val proposer: ActorSelection = context.actorSelection(PROPOSER)
     proposer ! Init_Prepare(to_propose)
     //timer here or in paxos?
@@ -39,7 +41,7 @@ class StateMachine extends  Actor{
 
   def addReplicaToSets(replica : String): Unit = {
 
-    replicas += replica
+    replicas = replicas :+ replica
     val proposer : ActorSelection = context.actorSelection(PROPOSER)
     proposer ! addReplicaToSet(replica)
 
@@ -65,6 +67,10 @@ class StateMachine extends  Actor{
       }
 
     case decide : Decide =>
+
+      printf("Decido " + decide.operation.code + " com key " + decide.operation.key + " com value "
+        + decide.operation.value + " do cliente " + decide.operation.client)
+
       if( pending_requests.contains( decide.operation ) )
         pending_requests = pending_requests.filter( _ == decide.operation)
 
@@ -88,10 +94,10 @@ class StateMachine extends  Actor{
       }
 
     case addReplica: AddReplica =>
-      if (!replicas.contains(addReplica.replica)) self ! NewOperation( Operation( "addReplica", "", addReplica.replica, -1 ))
+      if (!replicas.contains(addReplica.replica)) self ! NewOperation( Operation( "addReplica", "", addReplica.replica, -1, addReplica.replica ))
 
     case removeReplica: RemoveReplica =>
-      self ! NewOperation(Operation("removeReplica", "", removeReplica.replica, -1 ) )
+      self ! NewOperation(Operation("removeReplica", "", removeReplica.replica, -1, removeReplica.replica ) )
 
     case sendStateRep: AddAndSend =>
 
@@ -110,7 +116,7 @@ object StateMachine{
 
   val props: Props = Props[StateMachine]
 
-  case class Init ( replicas: Set[String] )
+  case class Init ( replicas: List[String] )
 
   case class NewOperation( operation: Operation )
 
@@ -124,7 +130,7 @@ object StateMachine{
 
   case class AddAndSend()
 
-  case class AddStateM(replicas: Set[String], decided: List[Operation])
+  case class AddStateM(replicas: List[String], decided: List[Operation])
 
   case class addReplicaToSet(replica: String)
 

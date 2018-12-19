@@ -25,7 +25,7 @@ class LifeKeeper extends Actor {
 
     case initHeartbeat: InitHeartbeat => {
 
-      context.system.scheduler.schedule(0 seconds, 5 seconds)(initHeartbeat())
+      context.system.scheduler.schedule(0 seconds, 5 seconds)(initHeartbeat)
       context.system.scheduler.schedule(0 seconds, 5 seconds)((searchFailedProcesses()))
     }
 

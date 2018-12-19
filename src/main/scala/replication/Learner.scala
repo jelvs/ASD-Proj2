@@ -49,7 +49,7 @@ object Learner{
 
   case class InitPaxos();
 
-  case class Accept_OK(n : Int, operation: Operation,  replicas: Set[String]);
+  case class Accept_OK(n : Int, operation: Operation,  replicas: List[String]);
 
 
 }

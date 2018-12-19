@@ -7,7 +7,7 @@ import replication.Proposer.{Accept, Prepare}
 class Accepter extends Actor {
 
   val Learner = "/user/learner"
-  var replicas : Set[String] = Set.empty
+  var replicas : List[String] = List.empty
 
   var np: Int = 0
   var na: Int = 0
@@ -19,7 +19,7 @@ class Accepter extends Actor {
       replicas = init.replicas
 
     case prepare: Prepare =>
-
+      println("Received prepare")
       if(prepare.sqn >= np){
         np = prepare.sqn
         sender ! PrepareOk(np, (na, va))
@@ -27,7 +27,7 @@ class Accepter extends Actor {
 
 
     case accept: Accept => {
-
+      println("Recieved Accept")
       if(accept.sqn >= np) {
         na = accept.sqn
         va = accept.operation
@@ -51,11 +51,11 @@ class Accepter extends Actor {
 
 object Accepter{
 
-  case class Init( replicas: Set[String] )
+  case class Init( replicas: List[String] )
 
   case class AcceptOk( sqn: Int, operation: Operation)
 
-  case class AcceptOkLearner( sqn: Int, operation: Operation, replicas: Set[String])
+  case class AcceptOkLearner( sqn: Int, operation: Operation, replicas: List[String])
 
   case class PrepareOk( sqn: Int, va: (Int, Operation) )
 

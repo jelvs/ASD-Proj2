@@ -71,12 +71,12 @@ class Register extends Actor {
     case write: Write =>
 
       val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-      val operation = Operation("write", write.key, write.value, -1, sender().toString())
+      val operation = Operation("write", write.key, write.value, -1, write.address)
       statemachine ! NewOperation(operation)
 
     case read: Read =>
       val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-      val operation = Operation("read", read.key, "", -1, sender().toString())
+      val operation = Operation("read", read.key, "", -1, read.address)
       statemachine ! NewOperation(operation)
 
     case operation_to_execute : ExecuteOp =>
@@ -99,7 +99,7 @@ object Register {
 
   case class Init(ownAddress: String)
 
-  case class ReceiveState(replicas: Set[String], decided: List[Operation])
+  case class ReceiveState(replicas: List[String], decided: List[Operation])
 
   case class ImHere()
 

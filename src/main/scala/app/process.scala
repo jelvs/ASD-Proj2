@@ -5,6 +5,7 @@ import app.Register.{Init}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 import replication._
 
+import scala.collection.JavaConverters._
 
 
 object Process extends App {
@@ -18,16 +19,28 @@ object Process extends App {
   val system = ActorSystem("akkaSystem", config)
   val ownAddress = getOwnAddress(port)
 
+
   //val client = system.actorOf(Props[Client], "client")
   val register = system.actorOf(Props[Register], "register")
   val stateMachine = system.actorOf(Props[StateMachine], "statemachine")
   val lifekeeper = system.actorOf(Props[LifeKeeper], "lifekeeper")
-  //val proposer = system.actorOf(Props[Proposer], "proposer")
-  //val accepter = system.actorOf(Props[Accepter], "accepter")
-  //val learner = system.actorOf(Props[Learner], "learner")
+  val proposer = system.actorOf(Props[Proposer], "proposer")
+  val accepter = system.actorOf(Props[Accepter], "accepter")
+  val learner = system.actorOf(Props[Learner], "learner")
+
+  val processes: List[String] = ConfigFactory.load.getStringList("processes").asScala.toList
+
+  //hardcode alert
+  var id : Int = -1
+  if(port == 2552) id =1
+  if(port == 2554) id = 2
+  if(port == 2256 ) id = 3
 
   register ! Init(ownAddress)
   lifekeeper ! LifeKeeper.Init(ownAddress)
+  stateMachine ! StateMachine.Init(processes)
+  proposer ! Proposer.Init(id, processes)
+  accepter ! Accepter.Init(processes)
 
 
   var contactNode = ""
