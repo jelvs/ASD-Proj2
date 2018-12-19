@@ -30,10 +30,15 @@ class Register extends Actor {
     println("hey no read")
     var toReturn : String = null
 
-    keyValueStore.get(operation.key) match {
+    println("keyRead: " + operation.key)
+
+    if(keyValueStore.contains(operation.key))
+      toReturn = keyValueStore(operation.key)
+    /*keyValueStore.get(operation.key) match {
       case Some(value: String) => toReturn = value
       case None => //Do nothing
-    }
+    }*/
+
 
     if( operation.replica == ownAddress ) {
       println("vou responder")
@@ -46,12 +51,17 @@ class Register extends Actor {
     println("Hey no write")
     var toReturn : String = null
 
-    keyValueStore.get(operation.key) match {
+    println("keyWrite: " + operation.key)
+
+
+
+    /*keyValueStore.get(operation.key) match {
       case Some(value: String) => toReturn = value
       case None => //Do nothing
-    }
+    }*/
 
-    keyValueStore.put(operation.key, operation.value)
+
+    keyValueStore += (operation.key -> operation.value)
 
     if(operation.replica == ownAddress) {
       println("Vou responder")

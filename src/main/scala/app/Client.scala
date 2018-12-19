@@ -55,7 +55,7 @@ object Client extends App {
 
       case Write(key, value, addr) => {
 
-        println("write bitch")
+
 
         val pro = Random.shuffle(processes).head
 
@@ -77,7 +77,7 @@ object Client extends App {
       }
 
       case response: Response =>
-        println("Respsta " + response.value)
+        println("Resposta " + response.value)
 
     }
   }
