@@ -89,9 +89,6 @@ class StateMachine extends  Actor{
       decided = refresh.decided
     }
 
-
-
-      
   }
 }
 
