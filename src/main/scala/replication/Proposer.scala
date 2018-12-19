@@ -76,7 +76,7 @@ class Proposer extends Actor {
 
         if(acceptOk_replies.size == quorum_size) {
           val stateMachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-          stateMachine ! Decide(current_index, proposal)
+          stateMachine ! Decide(operations_executed, proposal)
         }
       }
   }
