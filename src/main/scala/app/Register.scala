@@ -3,13 +3,13 @@ package app
 import akka.actor.{Actor, ActorSelection}
 import app.ClientActor._
 import app.LifeKeeper.ReceiveImHere
-import app.Register.{ForwardRead, ImHere, Init, ReceiveState}
+import app.Register.{ImHere, Init, ReceiveState, Response}
 import com.typesafe.config.ConfigFactory
-import replication.{Operation, StateMachine}
+import replication.Operation
 import replication.StateMachine._
 
-import collection.JavaConverters._
-import scala.collection.mutable.HashMap
+import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.util.Random
 
 class Register extends Actor {
@@ -18,7 +18,7 @@ class Register extends Actor {
   val CLIENT = "/user/client"
   val LIFEKEEPER = "/user/lifekeeper"
 
-  var keyValueStore = HashMap[String, String]()
+  var keyValueStore : mutable.HashMap[String, String]  = mutable.HashMap.empty
 
   var ownAddress: String = ""
 
@@ -26,7 +26,34 @@ class Register extends Actor {
 
   var replicas : Set[String] = Set.empty
 
-  override def receive = {
+  def executeRead(operation: Operation): Unit = {
+
+    var toReturn : String = null
+
+    keyValueStore.get(operation.key) match {
+      case Some(value: String) => toReturn = value
+      case None => //Do nothing
+    }
+
+    val client: ActorSelection = context.actorSelection(operation.client+CLIENT)
+    client ! Response(toReturn)
+  }
+
+  def executeWrite(operation: Operation): Unit = {
+
+    var toReturn : String = null
+
+    keyValueStore.get(operation.key) match {
+      case Some(value: String) => toReturn = value
+      case None => //Do nothing
+    }
+
+    keyValueStore.put(operation.key, operation.value)
+    val client: ActorSelection = context.actorSelection(operation.client+CLIENT)
+    client ! Response(toReturn)
+  }
+
+  override def receive: PartialFunction[Any, Unit] = {
 
 
     case message: Init =>
@@ -44,72 +71,31 @@ class Register extends Actor {
     case write: Write =>
 
       val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-      val operation = Operation("write", write.key, write.value, -1)
+      val operation = Operation("write", write.key, write.value, -1, sender().toString())
       statemachine ! NewOperation(operation)
 
-    case read: Read => {
+    case read: Read =>
       val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-      val operation = Operation("read", read.key, "", -1)
+      val operation = Operation("read", read.key, "", -1, sender().toString())
       statemachine ! NewOperation(operation)
-    }
-      //TODO: Swich das operações write e read e mandar a resposta para o cliente.
-    //receber da statemachine guardar e mandar para o client
-    case forwardWrite: ExecuteOp => {
 
-      var previousValue = keyValueStore.get(forwardWrite.operation.key)
-
-      keyValueStore.put(forwardWrite.operation.key, forwardWrite.operation.value)
-
-      val client: ActorSelection = context.actorSelection(CLIENT)
-
-      //Send Preevious value
-
-    }
-
-    case forwardRead: ExecuteOp =>
-      if (keyValueStore.contains(forwardRead.operation.key)) {
-        //client ! SendRead(keyValueStore.get(read.key))
-      }
-      else {
-        //erro nao existe value para essa determinada key
-
-        //client ! SendRead(keyValueStore.get(forwardRead.operation.value)
+    case operation_to_execute : ExecuteOp =>
+      operation_to_execute.operation.code match {
+        case "read" => executeRead(operation_to_execute.operation)
+        case "write" => executeWrite(operation_to_execute.operation)
       }
 
-    case  updateState: ReceiveState => {
+    case  updateState: ReceiveState =>
+      val stateMachine: ActorSelection = context.actorSelection(STATE_MACHINE)
+      stateMachine ! AddStateM(updateState.replicas, updateState.decided)
 
-        val stateMachine: ActorSelection = context.actorSelection(ownAddress.concat(STATE_MACHINE))
-
-        stateMachine ! AddStateM(updateState.replicas, updateState.decided)
-
-        updateState.replicas.foreach(r => {
-          val rep = context.actorSelection(r.concat(STATE_MACHINE))
-          rep ! AddReplica(ownAddress)
-        })
-
-    }
-
-    case imHere : ImHere =>{
+    case _ : ImHere =>
       val lifeKeeper: ActorSelection = context.actorSelection(sender.path.address.toString.concat(LIFEKEEPER))
       lifeKeeper ! ReceiveImHere(ownAddress)
-    }
-
-
   }
-
-
-
 }
 
 object Register {
-
-  case class ForwardWrite();
-
-  case class ForwardRead();
-
-  case class SendRead(value: String)
-
-  case class sendWrite(value: String)
 
   case class Init(ownAddress: String)
 
@@ -117,4 +103,5 @@ object Register {
 
   case class ImHere()
 
+  case class Response(value: String)
 }
