@@ -1,8 +1,8 @@
 package app
 
 import akka.actor.{ActorSystem, Props}
+import app.Register.{Init}
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
-
 import replication._
 
 
@@ -15,15 +15,19 @@ object Process extends App {
   }
 
   val config = configure()
-  val system = ActorSystem("SystemName", config)
+  val system = ActorSystem("akkaSystem", config)
   val ownAddress = getOwnAddress(port)
 
   //val client = system.actorOf(Props[Client], "client")
   val register = system.actorOf(Props[Register], "register")
   val stateMachine = system.actorOf(Props[StateMachine], "statemachine")
+  val lifekeeper = system.actorOf(Props[LifeKeeper], "lifekeeper")
   //val proposer = system.actorOf(Props[Proposer], "proposer")
   //val accepter = system.actorOf(Props[Accepter], "accepter")
   //val learner = system.actorOf(Props[Learner], "learner")
+
+  register ! Init(ownAddress)
+  lifekeeper ! LifeKeeper.Init(ownAddress)
 
 
   var contactNode = ""

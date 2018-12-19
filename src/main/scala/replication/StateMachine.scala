@@ -1,8 +1,11 @@
 package replication
 
 import akka.actor.{Actor, ActorSelection, Props}
+import app.Register.ReceiveState
 import replication.Proposer.Decide
 import replication.StateMachine._
+
+import scala.util.Random
 
 class StateMachine extends  Actor{
 
@@ -14,6 +17,7 @@ class StateMachine extends  Actor{
 
 
   val PROPOSER = "/user/proposer"
+  val REGISTER = "/user/register"
   val proposer = context.actorOf(Props(new Proposer()),"proposer")
   val accepter = context.actorOf(Props(new Accepter()), "accepter")
   val learner = context.actorOf(Props(new Learner()), "learner")
@@ -34,6 +38,8 @@ class StateMachine extends  Actor{
       numb_replicas = replicas.size
 
     case op : NewOperation =>
+
+      println("Lets start this shit")
       pending_requests = pending_requests :+ op.operation
       val proposer: ActorSelection = context.actorSelection(PROPOSER)
       proposer ! Init_Prepare(op.operation)
@@ -58,12 +64,31 @@ class StateMachine extends  Actor{
 
       }
 
-    case addReplica: AddReplica =>
-      if(!replicas.contains(addReplica.replica)){
+    case addReplica: AddReplica => {
+      if (!replicas.contains(addReplica.replica)) {
         replicas +: addReplica.replica
       }
+    }
 
-      
+    case removeReplica: RemoveReplica => {
+      replicas = replicas.filter(!_.equals(removeReplica.replica))
+    }
+
+    case sendStateRep: AddAndSend =>{
+
+      val register: ActorSelection = context.actorSelection(sender.path.address.toString.concat(REGISTER))
+      register ! ReceiveState(replicas, decided)
+
+
+      replicas +: sender.path.address.toString
+
+    }
+
+    case refresh : AddStateM =>{
+      replicas = refresh.replicas
+      decided = refresh.decided
+    }
+
   }
 }
 
@@ -82,5 +107,10 @@ object StateMachine{
   case class RemoveReplica(replica : String)
 
   case class ExecuteOp(operation : Operation)
+
+  case class AddAndSend()
+
+  case class AddStateM(replicas: Set[String], decided: List[Operation])
+
 
 }

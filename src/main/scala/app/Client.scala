@@ -3,13 +3,16 @@ package app
 import akka.actor.{Actor, ActorSelection, ActorSystem, Props}
 import ClientActor._
 
+import collection.JavaConverters._
 import com.typesafe.config.{Config, ConfigFactory, ConfigValueFactory}
 
+import scala.util.Random
 
 
-object Client extends App{
+object Client extends App {
 
   val config = ConfigFactory.load.getConfig("ApplicationConfig")
+  val processes: List[String] = ConfigFactory.load.getStringList("processes").asScala.toList
   val system = ActorSystem("akkaSystem", config)
 
   val clientActor = system.actorOf(Props[ClientActor], "clientActor")
@@ -17,43 +20,42 @@ object Client extends App{
 
   println("hello world")
 
+
   clientActor ! Write("1", "maria")
 
 
+  class ClientActor extends Actor {
+
+    val REGISTER = "/user/register"
+
+    override def receive = {
+
+
+      case Write(key, value) => {
+
+        println("write bitch")
+
+        val pro = Random.shuffle(processes).head
+
+       // println(pro)
 
 
 
-}
 
-class ClientActor extends Actor {
+        val register: ActorSelection = context.actorSelection(pro.concat(REGISTER))
 
-  val Register = "/user/Register"
+        register ! Write(key, value)
+      }
 
-  override def receive = {
+      case Read(key) => {
+
+        val register: ActorSelection = context.actorSelection(REGISTER)
+
+        register ! Read(key)
+      }
 
 
-
-
-    case Write(key, value) => {
-
-      println("write bitch")
-
-      val register: ActorSelection = context.actorSelection(Register)
-
-      register ! Write(key, value)
     }
-
-    case Read(key) => {
-
-      val register: ActorSelection = context.actorSelection(Register)
-
-      register ! Read(key)
-    }
-
-
-
-
-
   }
 
 }
