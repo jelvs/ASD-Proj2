@@ -29,57 +29,30 @@ class Register extends Actor {
   override def receive = {
 
 
-    case message: Init => {
+    case message: Init =>
+
       ownAddress = message.ownAddress
-
-      val lifekeeper: ActorSelection = context.actorSelection(LIFEKEEPER)
-
-      lifekeeper ! LifeKeeper.InitHeartbeat(ownAddress)
+      val life_keeper: ActorSelection = context.actorSelection(LIFEKEEPER)
+      life_keeper ! LifeKeeper.InitHeartbeat(ownAddress)
 
       if(!processes.contains(ownAddress)){
         val process = Random.shuffle(processes).head
-
         val statemachine: ActorSelection = context.actorSelection(process.concat(STATE_MACHINE))
-
         statemachine ! AddAndSend()
       }
 
-
-
-    }
-
-
-    case write: Write => {
-
-      println("ola bitch im back")
+    case write: Write =>
 
       val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
-      val pos: Int = -1
-
-      val operation = Operation("write", write.key, write.value, pos)
-
+      val operation = Operation("write", write.key, write.value, -1)
       statemachine ! NewOperation(operation)
 
-
-    }
-
-
     case read: Read => {
-
-      val client: ActorSelection = context.actorSelection(CLIENT)
-
-      if (keyValueStore.contains(read.key)) {
-        //client ! SendRead(keyValueStore.get(read.key))
-      }
-      else {
-        //erro nao existe value para essa determinada key
-
-        //client ! SendRead(keyValueStore.get(forwardRead.operation.value)
-      }
-
-
+      val statemachine: ActorSelection = context.actorSelection(STATE_MACHINE)
+      val operation = Operation("read", read.key, "", -1)
+      statemachine ! NewOperation(operation)
     }
-
+      //TODO: Swich das operações write e read e mandar a resposta para o cliente.
     //receber da statemachine guardar e mandar para o client
     case forwardWrite: ExecuteOp => {
 
@@ -93,9 +66,17 @@ class Register extends Actor {
 
     }
 
+    case forwardRead: ExecuteOp =>
+      if (keyValueStore.contains(forwardRead.operation.key)) {
+        //client ! SendRead(keyValueStore.get(read.key))
+      }
+      else {
+        //erro nao existe value para essa determinada key
 
+        //client ! SendRead(keyValueStore.get(forwardRead.operation.value)
+      }
 
-      case  updateState: ReceiveState => {
+    case  updateState: ReceiveState => {
 
         val stateMachine: ActorSelection = context.actorSelection(ownAddress.concat(STATE_MACHINE))
 
