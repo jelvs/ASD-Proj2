@@ -5,22 +5,16 @@ import app.Register.ReceiveState
 import replication.Proposer.Decide
 import replication.StateMachine._
 
-import scala.util.Random
-
 class StateMachine extends  Actor{
 
-  var last_executed : Int = 0
-  var numb_replicas : Int = 0
+  var paxos_initiated : Boolean = false
+  var operations_executed : Int = 0
   var replicas : Set[String] = Set.empty
   var decided : List[Operation] = List.empty
   var pending_requests : List[Operation] = List.empty
 
-
   val PROPOSER = "/user/proposer"
   val REGISTER = "/user/register"
-  val proposer = context.actorOf(Props(new Proposer()),"proposer")
-  val accepter = context.actorOf(Props(new Accepter()), "accepter")
-  val learner = context.actorOf(Props(new Learner()), "learner")
 
   def getOperation(pos: Int): Operation = {
 
@@ -31,63 +25,83 @@ class StateMachine extends  Actor{
       }
   }
 
+  def initPaxos(): Unit = {
+
+    paxos_initiated = true
+    val to_propose : Operation = pending_requests.head
+    to_propose.pos = decided.size +1
+    val proposer: ActorSelection = context.actorSelection(PROPOSER)
+    proposer ! Init_Prepare(to_propose)
+    //timer here or in paxos?
+
+  }
+
+
+  def addReplicaToSets(replica : String): Unit = {
+
+    replicas += replica
+    val proposer : ActorSelection = context.actorSelection(PROPOSER)
+    proposer ! addReplicaToSet(replica)
+
+  }
+
+  def removeReplicaFromSets(replica: String): Unit ={
+    replicas = replicas.filter(!_.equals(replica))
+    val proposer : ActorSelection = context.actorSelection(PROPOSER)
+    proposer ! removeReplicaFromSet(replica)
+  }
+
   override def receive: Receive = {
 
     case init: Init =>
       replicas = init.replicas
-      numb_replicas = replicas.size
+
 
     case op : NewOperation =>
 
-      println("Lets start this shit")
       pending_requests = pending_requests :+ op.operation
-      val proposer: ActorSelection = context.actorSelection(PROPOSER)
-      proposer ! Init_Prepare(op.operation)
-      //timer here or in paxos?
+      if(!paxos_initiated) {
+        initPaxos()
+      }
 
     case decide : Decide =>
       if( pending_requests.contains( decide.operation ) )
-        if( decide.operation == pending_requests.head ) //if it was what I proposed
-          pending_requests = pending_requests.filter( _ == decide.operation)
+        pending_requests = pending_requests.filter( _ == decide.operation)
 
       var hasHole : Boolean = false
-      var i : Int= last_executed
+      var i : Int= operations_executed
       while ( i < decided.length || !hasHole ){
 
         val operation : Operation = getOperation(i)
         if(operation == null) hasHole = true
         else {
 
+          if( operation.code == "addReplica" ) addReplicaToSets( operation.value )
+          else if (operation.code == "removeReplica") removeReplicaFromSets(operation.value)
+
           //trigger Register.Execute(operation)
           i+=1
         }
 
+       if(pending_requests.nonEmpty)
+        initPaxos()
       }
 
-    case addReplica: AddReplica => {
-      if (!replicas.contains(addReplica.replica)) {
-        replicas +: addReplica.replica
-      }
-    }
+    case addReplica: AddReplica =>
+      if (!replicas.contains(addReplica.replica)) self ! NewOperation( Operation( "addReplica", "", addReplica.replica, -1 ))
 
-    case removeReplica: RemoveReplica => {
-      replicas = replicas.filter(!_.equals(removeReplica.replica))
-    }
+    case removeReplica: RemoveReplica =>
+      self ! NewOperation(Operation("removeReplica", "", removeReplica.replica, -1 ) )
 
-    case sendStateRep: AddAndSend =>{
+    case sendStateRep: AddAndSend =>
 
       val register: ActorSelection = context.actorSelection(sender.path.address.toString.concat(REGISTER))
       register ! ReceiveState(replicas, decided)
-
-
       replicas +: sender.path.address.toString
 
-    }
-
-    case refresh : AddStateM =>{
+    case refresh : AddStateM =>
       replicas = refresh.replicas
       decided = refresh.decided
-    }
 
   }
 }
@@ -112,5 +126,8 @@ object StateMachine{
 
   case class AddStateM(replicas: Set[String], decided: List[Operation])
 
+  case class addReplicaToSet(replica: String)
+
+  case class removeReplicaFromSet(replica : String)
 
 }
