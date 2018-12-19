@@ -32,6 +32,7 @@ object Client extends App {
 
 
   clientActor ! Write("1", "maria", ownAddress)
+  clientActor ! Read("1", ownAddress)
   //clientActor ! Write("2", "jose", ownAddress)
   //clientActor ! Read("1")
   //clientActor ! Read("2")

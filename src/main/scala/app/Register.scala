@@ -15,7 +15,7 @@ import scala.util.Random
 class Register extends Actor {
 
   val STATE_MACHINE = "/user/statemachine"
-  val CLIENT = "/user/client"
+  val CLIENT = "/user/clientActor"
   val LIFEKEEPER = "/user/lifekeeper"
 
   var keyValueStore : mutable.HashMap[String, String]  = mutable.HashMap.empty
@@ -54,6 +54,7 @@ class Register extends Actor {
     keyValueStore.put(operation.key, operation.value)
 
     if(operation.replica == ownAddress) {
+      println("Vou responder")
       val client: ActorSelection = context.actorSelection(operation.client + CLIENT)
       client ! Response(toReturn)
     }
