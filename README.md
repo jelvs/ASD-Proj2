@@ -3,24 +3,6 @@
 ## 2º Project
 
 
-## Publish-Subscribe using Unstructured
-
-### Introduction
-
-The goal of this phase of the Project is to implement a publish-subscribe protocol on top of an unstructured overlay 
-network (also known as unstructured overlay network).
-We consider a publish subscribe system similar to the one in option A, which offers to other protocols the following 
-interface:
-
-**subscribe (TOPIC):** That notifies the system that the protocol above is interested in received 
-(through a notification) all messages published that are tagged with TOPIC.
- 
-**unsubscribe (TOPIC) :**  That notifies the system that the protocol above is no longer interested in receiving 
-messages tagged with TOPIC
-
-**publish (TOPIC, message):** That publishes, to the system , a message tagged with TOPIC. For simplicity, 
-we consider that messages are tagged with exactly one topic.
-
 ### State Machine Replication - Paxos
 
 
